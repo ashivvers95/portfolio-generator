@@ -1,6 +1,6 @@
-const fs = require('fs');
 const inquirer = require('inquirer');
 const generatePage = require('./src/page-template');
+const { writeFile, copyFile } = require('./utils/generate-site.js');
 
 const promptUser = () => {
 return inquirer.prompt([
@@ -20,12 +20,12 @@ return inquirer.prompt([
     {
       type:'input',
       name: 'github',
-      message: 'Enter your GitHub Username',
-      validate: githubUsername => {
-        if (githubUsername) {
+      message: 'Enter your GitHub Username (Required)',
+      validate: githubInput => {
+        if (githubInput) {
           return true;
         }else{
-          console.log('Please enter our name!');
+          console.log('Please enter your Github username!');
           return false;
         }
       }
@@ -61,8 +61,8 @@ const promptProject = portfolioData => {
       type: 'input',
       name: 'name',
       message: ' What is the name of your project?',
-      validate: projectName => {
-        if (projectName) {
+      validate: nameInput => {
+        if (nameInput) {
           return true;
         }else{
           console.log('Please enter our name!');
@@ -74,8 +74,8 @@ const promptProject = portfolioData => {
       type: 'input',
       name: 'description',
       message: 'Provide a description of the project (Required)',
-      validate: projectDescription => {
-        if (projectDescription) {
+      validate: descriptionInput => {
+        if (descriptionInput) {
           return true;
         }else{
           console.log('Please enter our name!');
@@ -114,12 +114,6 @@ const promptProject = portfolioData => {
       message: 'Would you like to enter another project',
       default: false
     },
-    {
-      type: 'confirm',
-      name: 'confirmAbout',
-      message: 'Would you like to enter some information about yourself for an "About" section?',
-      default: true
-    },
   ])
   .then(projectData => {
     portfolioData.projects.push(projectData);
@@ -132,13 +126,20 @@ const promptProject = portfolioData => {
 };
 
 promptUser()
-.then(promptProject)
-.then(portfolioData => {
-  const pageHTML = generatePage();
-
-fs.writeFile('./index.html', pageHTML, err => {
-  if (err) throw new Error (err);
-
-  console.log('Portfolio complete! Checkout index.html to see the output!')
-});
-});
+  .then(promptProject)
+  .then(portfolioData => {
+    return generatePage(portfolioData);
+  })
+  .then(pageHTML => {
+    return writeFile(pageHTML);
+  })
+  .then(writeFileResponse => {
+    console.log(writeFileResponse);
+    return copyFile();
+  })
+  .then(copyFileResponse => {
+    console.log(copyFileResponse);
+  })
+  .catch(err => {
+    console.log(err);
+  });
